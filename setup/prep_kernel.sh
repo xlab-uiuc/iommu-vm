@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 
-
-wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.12.9.tar.xz
-tar -xf linux-6.12.9.tar.xz
-cp ubuntu-6.12.9-config linux-6.12.9/.config
-cd linux-6.12.9/
+kernel_version="6.0.3"
+wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${kernel_version}.tar.xz
+# wget https://mirrors.edge.kernel.org/pub/linux/kernel/v6.x/linux-${kernel_version}.tar.gz
+tar -xf linux-${kernel_version}.tar.xz
+cp ubuntu-6.12.9-config linux-${kernel_version}/.config
+cd linux-${kernel_version}/
 
 make olddefconfig
 
