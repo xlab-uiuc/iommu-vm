@@ -4,7 +4,7 @@
 # awk -F\' '/menuentry / {print $2}' /boot/grub/grub.cfg
 # source https://adamtheautomator.com/ubuntu-grub
 
-
+# set -x
 GRUB_DEFAULT="/etc/default/grub"
 cmd_lines=$(sudo cat $GRUB_DEFAULT | grep GRUB_CMDLINE_LINUX | grep emulabcnet)
 
@@ -23,19 +23,24 @@ for line in $cmd_lines; do
 done
 unset IFS       # Reset IFS
 
+IOMMU_KEY="iommu=off"
+select_line=$(grep -n GRUB_CMDLINE_LINUX $GRUB_DEFAULT | grep emulabcnet | grep $IOMMU_KEY)
+line_num=$(echo $select_line | cut -d: -f1)
 
-strict_line=$(grep -n GRUB_CMDLINE_LINUX $GRUB_DEFAULT | grep emulabcnet | grep -v "iommu")
-line_num=$(echo $strict_line | cut -d: -f1)
-
-echo $strict_line $line_num
+echo $select_line $line_num
 
 # uncomment the line with iommu strict
-if [ "$strict_line" ]; then
+if [ "$select_line" ]; then
     sudo sed -i "${line_num}s/^# //" $GRUB_DEFAULT
 else
-    $grub_line=$(sudo cat /etc/default/grub | grep GRUB_CMDLINE_LINUX | grep emulabcnet | grep -v iommu)
-    modified_line=$(echo "$grub_line" | sed -E 's/"$/ intel_iommu=on iommu.strict=1"/')
-
+    grub_line=$(sudo cat /etc/default/grub | grep GRUB_CMDLINE_LINUX | grep emulabcnet | grep -v iommu)
+    modified_line=$(echo "$grub_line" | sed -E "s/\"$/ $IOMMU_KEY\"/")
+    
+    if [[ "$modified_line" == *#* ]]; then
+        # do nothing
+        modified_line=$(echo $modified_line | sed -E "s/^# //")
+    fi
+    
     echo "$modified_line" | sudo tee -a $GRUB_DEFAULT
 fi
 
