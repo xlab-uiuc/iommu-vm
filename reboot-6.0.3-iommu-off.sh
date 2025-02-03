@@ -23,7 +23,7 @@ for line in $cmd_lines; do
 done
 unset IFS       # Reset IFS
 
-IOMMU_KEY="iommu=off"
+IOMMU_KEY="intel_iommu=off"
 select_line=$(grep -n GRUB_CMDLINE_LINUX $GRUB_DEFAULT | grep emulabcnet | grep $IOMMU_KEY)
 line_num=$(echo $select_line | cut -d: -f1)
 
