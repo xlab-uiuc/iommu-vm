@@ -29,13 +29,18 @@ enum FunctionName
   IOMMU_UNMAP = 3,
   IOMMU_UNMAP_INTERNAL = 4,
   IOMMU_TLB_SYNC = 5, // intel_iommu_tlb_sync
-  QEMU_ADDRESS_SPACE_RW = 6,
-  QEMU_ADDRESS_SPACE_WRITE = 7,
-  QEMU_VTD_MEM_WRITE = 8,
-  QEMU_VFIO_DMA_MAP = 9,
-  QEMU_VFIO_DMA_UNMAP = 10,
-  QEMU_VFIO_REGION_WRITE = 11,
-  QEMU_VTD_IOMMU_TRANSLATE = 12,
+  PAGE_POOL_ALLOC = 6,
+  PAGE_POOL_SLOW = 7,
+  // VFIO_IOCTL_MAP_DMA = 6,
+  // VFIO_IOCTL_UNMAP_DMA = 7,
+  // QEMU_ADDRESS_SPACE_RW = 8,
+  // QEMU_ADDRESS_SPACE_WRITE = 9,
+  // QEMU_SHADOW_PAGE_TABLE = 8,
+  // QEMU_VTD_MEM_WRITE = 9,
+  // QEMU_VFIO_DMA_MAP = 10,
+  // QEMU_VFIO_DMA_UNMAP = 11,
+  // QEMU_VFIO_REGION_WRITE = 12,
+  // QEMU_VTD_IOMMU_TRANSLATE = 13,
   FUNCTION_NAME_MAX,
 };
 
@@ -48,6 +53,12 @@ struct entry_key_t
 struct entry_val_t
 {
   u64 ts;
+};
+
+struct ioctl_trace_val_t
+{
+  u64 ts;           // Timestamp of the entry
+  unsigned int cmd; // The ioctl command being traced
 };
 
 struct data_t

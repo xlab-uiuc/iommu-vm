@@ -122,11 +122,11 @@
         perf-tools
 
         # for llvm/Demangle/Demangle.h
-        libllvm
-        libllvm.dev
-        libgcc
-        libclang.lib
-        libclang.dev
+        # libllvm
+        # libllvm.dev
+        # libgcc
+        # libclang.lib
+        # libclang.dev
 
         # meson deps
         meson
@@ -142,22 +142,65 @@
         memcached
         python3
 
+        vim
+        nano
+
+
+        python3Packages.pip
+        python3Packages.virtualenv
+        python3Packages.numpy
+        python3Packages.pandas
+        python3Packages.matplotlib
+        python3Packages.sphinx
+        python3Packages.sphinx_rtd_theme
+        python3Packages.docutils
+        python3Packages.babel
+        python3Packages.pygments
+        python3Packages.packaging
+        python3Packages.jinja2
+        python3Packages.pyelftools
+        python3Packages.setuptools
+        python3Packages.wheel
+
+        python3Packages.pyyaml  # For config parsing
+        python3Packages.requests  # Some scripts might fetch data
+        python3Packages.tomli  # For Python 3.11+ support
+        python3Packages.pycparser  # For certain C header parsing tasks
+        python3Packages.pyparsing  # Used in Meson scripts
+        python3Packages.markupsafe
+        python3Packages.snowballstemmer
+
         zoxide # in case host is using zoxide
         openssh # q-script ssh support
+
+        glib
+        glib.dev
+
+        git
+
+        libvirt
+        # libvirt.dev  # Development headers (if needed)
+        libvirt-glib  # If using libvirt with GLib-based apps
+        virt-manager  # GUI for managing VMs (optional)
+
+        snappy
+        numactl 
+        rdma-core 
+        libaio 
+        bzip2
+        # sudo
       ];
 
       # (pkgs.buildFHSEnv.override { stdenv = pkgs.llvmPackages.stdenv; })
       fhs = (pkgs.buildFHSEnv.override { stdenv = pkgs.llvmPackages.stdenv; })
         {
-          name = "rex-env";
+          name = "qemu-viommu-env";
           targetPkgs = pkgs: rexPackages;
           runScript = "bash";
 
           profile = ''
             export LD_LIBRARY_PATH=${pkgs.libgcc.lib}/lib:$LD_LIBRARY_PATH
             export NIX_ENFORCE_NO_NATIVE=0
-            export PATH=$(realpath "./build/rust-dist/bin"):$PATH
-            export RUST_BACKTRACE=1
           '';
         };
     in

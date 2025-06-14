@@ -6,28 +6,16 @@
 
 char LICENSE[] SEC("license") = "GPL";
 
+#define SAMPLE_RATE_POW2 1024
+#define SAMPLE_MASK (SAMPLE_RATE_POW2 - 1)
+
 struct
 {
-  __uint(type, BPF_MAP_TYPE_HASH);
+  __uint(type, BPF_MAP_TYPE_PERCPU_HASH);
   __uint(max_entries, 16384);
   __type(key, struct entry_key_t);
   __type(value, struct entry_val_t);
 } entry_traces SEC(".maps");
-
-struct
-{
-  __uint(type, BPF_MAP_TYPE_STACK_TRACE);
-  __uint(max_entries, 16384);
-  __type(key, u32);
-  __type(value, u64[BPF_MAX_STACK_DEPTH]);
-} stack_traces SEC(".maps");
-
-struct
-{
-  __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
-  __uint(key_size, sizeof(u32));
-  __uint(value_size, sizeof(u32));
-} events SEC(".maps");
 
 struct
 {
@@ -40,6 +28,10 @@ struct
 static __always_inline int
 _bpf_utils_trace_func_entry(struct pt_regs *ctx)
 {
+  // u32 rnd = bpf_get_prandom_u32();
+  // if (rnd & SAMPLE_MASK)
+  //   return 0;
+
   u64 pid_tgid = bpf_get_current_pid_tgid();
   u64 cookie = bpf_get_attach_cookie(ctx);
   struct entry_key_t key = {.id = pid_tgid, .cookie = cookie};
@@ -54,16 +46,17 @@ _bpf_utils_trace_func_exit(struct pt_regs *ctx, enum Domain domain, bool is_upro
   u64 cookie = bpf_get_attach_cookie(ctx);
   struct entry_key_t key = {.id = pid_tgid, .cookie = cookie};
   struct entry_val_t *entry_val_p;
-  u64 duration_ns;
-  u64 duration_us;
-  bool is_sampled_event;
-  u32 func_enum_key;
 
   entry_val_p = bpf_map_lookup_elem(&entry_traces, &key);
   if (!entry_val_p)
   {
     return 0;
   }
+
+  u64 duration_ns;
+  u64 duration_us;
+  bool is_sampled_event;
+  u32 func_enum_key;
 
   duration_ns = bpf_ktime_get_ns() - entry_val_p->ts;
   func_enum_key = (u32)key.cookie;
@@ -77,29 +70,6 @@ _bpf_utils_trace_func_exit(struct pt_regs *ctx, enum Domain domain, bool is_upro
     // Convert duration to microseconds for sum of squares to prevent overflow
     duration_us = duration_ns / 1000;
     stats->sum_sq_duration_us += duration_us * duration_us;
-  }
-
-  u32 random = bpf_get_prandom_u32();
-  is_sampled_event = ((random & 0x7F) == 0);
-
-  if (is_sampled_event)
-  {
-    struct data_t data = {};
-    data.domain = domain;
-    data.func_name = (enum FunctionName)key.cookie;
-    data.duration_ns = duration_ns;
-    data.timestamp_ns = entry_val_p->ts;
-    data.pid = key.id >> 32;
-    data.tid = (u32)key.id;
-    data.cpu_id = bpf_get_smp_processor_id();
-    data.user_stack_id = -1;
-    data.kern_stack_id = bpf_get_stackid(ctx, &stack_traces, 0);
-
-    if (is_uprobe)
-    {
-      data.user_stack_id = bpf_get_stackid(ctx, &stack_traces, BPF_F_USER_STACK);
-    }
-    bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, &data, sizeof(data));
   }
 
   bpf_map_delete_elem(&entry_traces, &key);
@@ -181,6 +151,30 @@ int BPF_KPROBE(kprobe_intel_iommu_tlb_sync, struct iommu_domain *domain,
 
 SEC("kretprobe/intel_iommu_tlb_sync")
 int BPF_KRETPROBE(kretprobe_intel_iommu_tlb_sync)
+{
+  return _bpf_utils_trace_func_exit(ctx, GUEST, false);
+}
+
+SEC("kprobe/page_pool_alloc_netmem")
+int BPF_KPROBE(kprobe_page_pool_alloc_netmem, struct page_pool *pool, gfp_t gfp)
+{
+  return _bpf_utils_trace_func_entry(ctx);
+}
+
+SEC("kretprobe/page_pool_alloc_netmem")
+int BPF_KRETPROBE(kretprobe_page_pool_alloc_netmem, void *ret)
+{
+  return _bpf_utils_trace_func_exit(ctx, GUEST, false);
+}
+
+SEC("kprobe/__page_pool_alloc_pages_slow")
+int BPF_KPROBE(kprobe___page_pool_alloc_pages_slow, struct page_pool *pool, gfp_t gfp)
+{
+  return _bpf_utils_trace_func_entry(ctx);
+}
+
+SEC("kretprobe/__page_pool_alloc_pages_slow")
+int BPF_KRETPROBE(kretprobe___page_pool_alloc_pages_slow, void *ret)
 {
   return _bpf_utils_trace_func_exit(ctx, GUEST, false);
 }

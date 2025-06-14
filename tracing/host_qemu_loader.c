@@ -19,36 +19,28 @@
 #define MAX_STACK_DEPTH 127
 
 static volatile bool exiting = false;
-static FILE *output_event_file = NULL;
 static FILE *output_agg_data_file = NULL;
-static FILE *stack_trace_file = NULL;
 
 static char qemu_bin_path[PATH_MAX] = "/home/saksham/viommu/vanilla-source-code/qemu-viommu/build/qemu-system-x86_64";
-static pid_t qemu_pid = 17640;
+static pid_t qemu_pid = 303945;
 
 // --- Command Line Argument Parsing ---
 static struct arguments
 {
   int duration_sec;
   bool verbose;
-  char *output_filepath;
   char *agg_data_filepath;
-  char *stack_trace_filepath;
 } args = {
     .duration_sec = 30,
     .verbose = false,
-    .output_filepath = "host_trace_events.bin",
-    .agg_data_filepath = "host_aggregate.csv",
-    .stack_trace_filepath = "host_stack_trace.bin"};
+    .agg_data_filepath = "host_aggregate.csv"};
 
 static char doc[] = "eBPF loader for kernel and QEMU function tracing.";
 static char args_doc[] = "";
 static struct argp_option opts[] = {
     {"duration", 'd', "SECONDS", 0, "Duration to run the tracer (0 for infinite, default: 30)"},
     {"verbose", 'v', NULL, 0, "Enable libbpf verbose logging"},
-    {"agg-data-file", 'h', "FILE", 0, "Output structured aggregate data to CSV FILE (e.g., agg_data.csv)."},
-    {"output-file", 'o', "FILE", 0, "Output sampled events to binary FILE "},
-    {"stack-file", 's', "FILE", 0, "Output stack traces to binary FILE "},
+    {"agg-data-file", 'o', "FILE", 0, "Output structured aggregate data to CSV FILE (e.g., agg_data.csv)."},
     {NULL}};
 
 static error_t parse_arg(int key, char *arg, struct argp_state *state)
@@ -62,14 +54,8 @@ static error_t parse_arg(int key, char *arg, struct argp_state *state)
   case 'v':
     arguments->verbose = true;
     break;
-  case 'h':
-    arguments->agg_data_filepath = arg;
-    break;
   case 'o':
-    arguments->output_filepath = arg;
-    break;
-  case 's':
-    arguments->stack_trace_filepath = arg;
+    arguments->agg_data_filepath = arg;
     break;
   case ARGP_KEY_ARG:
     return ARGP_ERR_UNKNOWN;
@@ -109,6 +95,8 @@ typedef struct
   bool is_qemu_target;
 } probe_def_t;
 
+// SEC("uprobe//home/saksham/viommu/vanilla-source-code/qemu-viommu/build/qemu-system-x86_64:vtd_sync_shadow_page_table_range.isra.0")
+// int BPF_UPROBE(uprobe_vtd_sync_shadow_page_table_range, void *vtd_as,
 probe_def_t probes_to_attach[] = {
     {"kprobe_iommu_map", "iommu_map", PROBE_TYPE_KPROBE, IOMMU_MAP, false},
     {"kretprobe_iommu_map", "iommu_map", PROBE_TYPE_KRETPROBE, IOMMU_MAP, false},
@@ -122,20 +110,30 @@ probe_def_t probes_to_attach[] = {
     {"kretprobe___iommu_unmap", "__iommu_unmap", PROBE_TYPE_KRETPROBE, IOMMU_UNMAP_INTERNAL, false},
     {"kprobe_intel_iommu_tlb_sync", "intel_iommu_tlb_sync", PROBE_TYPE_KPROBE, IOMMU_TLB_SYNC, false},
     {"kretprobe_intel_iommu_tlb_sync", "intel_iommu_tlb_sync", PROBE_TYPE_KRETPROBE, IOMMU_TLB_SYNC, false},
-    {"uprobe_address_space_rw", "address_space_rw", PROBE_TYPE_UPROBE, QEMU_ADDRESS_SPACE_RW, true},
-    {"uretprobe_address_space_rw", "address_space_rw", PROBE_TYPE_URETPROBE, QEMU_ADDRESS_SPACE_RW, true},
-    {"uprobe_address_space_write", "address_space_write", PROBE_TYPE_UPROBE, QEMU_ADDRESS_SPACE_WRITE, true},
-    {"uretprobe_address_space_write", "address_space_write", PROBE_TYPE_URETPROBE, QEMU_ADDRESS_SPACE_WRITE, true},
-    {"uprobe_vtd_mem_write", "vtd_mem_write", PROBE_TYPE_UPROBE, QEMU_VTD_MEM_WRITE, true},
-    {"uretprobe_vtd_mem_write", "vtd_mem_write", PROBE_TYPE_URETPROBE, QEMU_VTD_MEM_WRITE, true},
-    {"uprobe_vfio_container_dma_map", "vfio_container_dma_map", PROBE_TYPE_UPROBE, QEMU_VFIO_DMA_MAP, true},
-    {"uretprobe_vfio_container_dma_map", "vfio_container_dma_map", PROBE_TYPE_URETPROBE, QEMU_VFIO_DMA_MAP, true},
-    {"uprobe_vfio_container_dma_unmap", "vfio_container_dma_unmap", PROBE_TYPE_UPROBE, QEMU_VFIO_DMA_UNMAP, true},
-    {"uretprobe_vfio_container_dma_unmap", "vfio_container_dma_unmap", PROBE_TYPE_URETPROBE, QEMU_VFIO_DMA_UNMAP, true},
-    {"uprobe_vfio_region_write", "vfio_region_write", PROBE_TYPE_UPROBE, QEMU_VFIO_REGION_WRITE, true},
-    {"uretprobe_vfio_region_write", "vfio_region_write", PROBE_TYPE_URETPROBE, QEMU_VFIO_REGION_WRITE, true},
-    {"uprobe_vtd_iommu_translate", "vtd_iommu_translate", PROBE_TYPE_UPROBE, QEMU_VTD_IOMMU_TRANSLATE, true},
-    {"uretprobe_vtd_iommu_translate", "vtd_iommu_translate", PROBE_TYPE_URETPROBE, QEMU_VTD_IOMMU_TRANSLATE, true},
+    {"kprobe_page_pool_alloc_netmem", "page_pool_alloc_netmem", PROBE_TYPE_KPROBE, PAGE_POOL_ALLOC, false},
+    {"kretprobe_page_pool_alloc_netmem", "page_pool_alloc_netmem", PROBE_TYPE_KRETPROBE, PAGE_POOL_ALLOC, false},
+    {"kprobe___page_pool_alloc_pages_slow", "__page_pool_alloc_pages_slow", PROBE_TYPE_KPROBE, PAGE_POOL_SLOW, false},
+    {"kretprobe___page_pool_alloc_pages_slow", "__page_pool_alloc_pages_slow", PROBE_TYPE_KRETPROBE, PAGE_POOL_SLOW, false},
+
+    // {"kprobe_vfio_iommu_type1_ioctl", "vfio_iommu_type1_ioctl", PROBE_TYPE_KPROBE, VFIO_IOCTL_MAP_DMA, false},
+    // {"kretprobe_vfio_iommu_type1_ioctl", "vfio_iommu_type1_ioctl", PROBE_TYPE_KRETPROBE, VFIO_IOCTL_MAP_DMA, false},
+
+    // {"uprobe_vtd_sync_shadow_page_table_range", "vtd_sync_shadow_page_table_range.isra.0", PROBE_TYPE_UPROBE, QEMU_SHADOW_PAGE_TABLE, true},
+    // {"uretprobe_vtd_sync_shadow_page_table_range", "vtd_sync_shadow_page_table_range.isra.0", PROBE_TYPE_URETPROBE, QEMU_SHADOW_PAGE_TABLE, true},
+    // {"uprobe_vtd_mem_write", "vtd_mem_write", PROBE_TYPE_UPROBE, QEMU_VTD_MEM_WRITE, true},
+    // {"uretprobe_vtd_mem_write", "vtd_mem_write", PROBE_TYPE_URETPROBE, QEMU_VTD_MEM_WRITE, true},
+    // {"uprobe_vfio_container_dma_map", "vfio_container_dma_map", PROBE_TYPE_UPROBE, QEMU_VFIO_DMA_MAP, true},
+    // {"uretprobe_vfio_container_dma_map", "vfio_container_dma_map", PROBE_TYPE_URETPROBE, QEMU_VFIO_DMA_MAP, true},
+    // {"uprobe_vfio_container_dma_unmap", "vfio_container_dma_unmap", PROBE_TYPE_UPROBE, QEMU_VFIO_DMA_UNMAP, true},
+    // {"uretprobe_vfio_container_dma_unmap", "vfio_container_dma_unmap", PROBE_TYPE_URETPROBE, QEMU_VFIO_DMA_UNMAP, true},
+    // {"uprobe_vfio_region_write", "vfio_region_write", PROBE_TYPE_UPROBE, QEMU_VFIO_REGION_WRITE, true},
+    // {"uretprobe_vfio_region_write", "vfio_region_write", PROBE_TYPE_URETPROBE, QEMU_VFIO_REGION_WRITE, true},
+    // {"uprobe_vtd_iommu_translate", "vtd_iommu_translate", PROBE_TYPE_UPROBE, QEMU_VTD_IOMMU_TRANSLATE, true},
+    // {"uretprobe_vtd_iommu_translate", "vtd_iommu_translate", PROBE_TYPE_URETPROBE, QEMU_VTD_IOMMU_TRANSLATE, true},
+    // // {"uprobe_address_space_rw", "address_space_rw", PROBE_TYPE_UPROBE, QEMU_ADDRESS_SPACE_RW, true},
+    // // {"uretprobe_address_space_rw", "address_space_rw", PROBE_TYPE_URETPROBE, QEMU_ADDRESS_SPACE_RW, true},
+    // // {"uprobe_address_space_write", "address_space_write", PROBE_TYPE_UPROBE, QEMU_ADDRESS_SPACE_WRITE, true},
+    // // {"uretprobe_address_space_write", "address_space_write", PROBE_TYPE_URETPROBE, QEMU_ADDRESS_SPACE_WRITE, true},
 };
 const int num_probes_to_attach = sizeof(probes_to_attach) / sizeof(probes_to_attach[0]);
 struct bpf_link *attached_links[MAX_PROBES];
@@ -163,29 +161,33 @@ const char *func_name_to_string(enum FunctionName fn)
     return "__iommu_unmap";
   case IOMMU_TLB_SYNC:
     return "intel_iommu_tlb_sync";
-  case QEMU_ADDRESS_SPACE_RW:
-    return "qemu:address_space_rw";
-  case QEMU_ADDRESS_SPACE_WRITE:
-    return "qemu:address_space_write";
-  case QEMU_VTD_MEM_WRITE:
-    return "qemu:vtd_mem_write";
-  case QEMU_VFIO_DMA_MAP:
-    return "qemu:vfio_container_dma_map";
-  case QEMU_VFIO_DMA_UNMAP:
-    return "qemu:vfio_container_dma_unmap";
-  case QEMU_VFIO_REGION_WRITE:
-    return "qemu:vfio_region_write";
-  case QEMU_VTD_IOMMU_TRANSLATE:
-    return "qemu:vtd_iommu_translate";
+  case PAGE_POOL_ALLOC:
+    return "page_pool_alloc_netmem";
+  case PAGE_POOL_SLOW:
+    return "page_pool_alloc_pages_slow";
+  // case VFIO_IOCTL_MAP_DMA:
+  //   return "vfio_iommu_type1_ioctl_map";
+  // case VFIO_IOCTL_UNMAP_DMA:
+  //   return "vfio_iommu_type1_ioctl_unmap";
+  // case QEMU_ADDRESS_SPACE_RW:
+  //   return "qemu:address_space_rw";
+  // case QEMU_ADDRESS_SPACE_WRITE:
+  //   return "qemu:address_space_write";
+  // case QEMU_SHADOW_PAGE_TABLE:
+  //   return "vtd_sync_shadow_page_table_range";
+  // case QEMU_VTD_MEM_WRITE:
+  //   return "qemu:vtd_mem_write";
+  // case QEMU_VFIO_DMA_MAP:
+  //   return "qemu:vfio_container_dma_map";
+  // case QEMU_VFIO_DMA_UNMAP:
+  //   return "qemu:vfio_container_dma_unmap";
+  // case QEMU_VFIO_REGION_WRITE:
+  //   return "qemu:vfio_region_write";
+  // case QEMU_VTD_IOMMU_TRANSLATE:
+  //   return "qemu:vtd_iommu_translate";
   default:
     return "UnknownFunction";
   }
-}
-
-void handle_event(void *ctx, int cpu, void *data, unsigned int data_sz)
-{
-  struct data_t *event = (struct data_t *)data;
-  fwrite(event, sizeof(struct data_t), 1, output_event_file);
 }
 
 static void dump_aggregate_to_file(FILE *fp, struct host_qemu_tracer_bpf *skel)
@@ -266,60 +268,9 @@ static void dump_aggregate_to_file(FILE *fp, struct host_qemu_tracer_bpf *skel)
   }
 }
 
-static void dump_stack_trace_map(FILE *fp, struct host_qemu_tracer_bpf *skel)
-{
-  if (!fp)
-    return;
-
-  int map_fd = bpf_map__fd(skel->maps.stack_traces);
-  if (map_fd < 0)
-  {
-    fprintf(stderr, "Failed to get stack_traces map FD: %s\n", strerror(errno));
-    return;
-  }
-
-  u32 prev_key = (u32)-1, next_key;
-  // walk all stack_ids in the map
-  while (bpf_map_get_next_key(map_fd, &prev_key, &next_key) == 0)
-  {
-    // next_key is a valid stack_id
-    u64 ips[MAX_STACK_DEPTH];
-    if (bpf_map_lookup_elem(map_fd, &next_key, ips) != 0)
-    {
-      fprintf(stderr, "WARN: Failed to lookup stack_id %u while dumping\n", next_key);
-      prev_key = next_key;
-      continue;
-    }
-
-    if (fwrite(&next_key, sizeof(next_key), 1, fp) != 1)
-      goto write_err;
-    u32 frame_count = 0;
-    for (int i = 0; i < MAX_STACK_DEPTH; i++)
-    {
-      if (ips[i] == 0)
-        break;
-      frame_count++;
-    }
-    if (fwrite(&frame_count, sizeof(frame_count), 1, fp) != 1)
-      goto write_err;
-    if (frame_count > 0)
-    {
-      if (fwrite(ips, sizeof(u64) * frame_count, 1, fp) != 1)
-        goto write_err;
-    }
-
-    prev_key = next_key;
-  }
-  return;
-
-write_err:
-  perror("Failed to write to stack map dump");
-}
-
 int main(int argc, char **argv)
 {
   struct host_qemu_tracer_bpf *skel = NULL;
-  struct perf_buffer *pb = NULL;
   int err = 0;
   struct timespec start_ts, now_ts;
   int attached_count = 0;
@@ -328,41 +279,15 @@ int main(int argc, char **argv)
   if (err)
     return err;
 
-  if (args.output_filepath)
-  {
-    output_event_file = fopen(args.output_filepath, "wb");
-    if (!output_event_file)
-    {
-      perror("Failed to open output binary file");
-      return EXIT_FAILURE;
-    }
-    printf("Outputting sampled events to binary file: %s\n", args.output_filepath);
-  }
   if (args.agg_data_filepath)
   {
     output_agg_data_file = fopen(args.agg_data_filepath, "w"); // Create/overwrite
     if (!output_agg_data_file)
     {
       perror("Failed to open output file for aggregate data");
-      if (output_event_file)
-        fclose(output_event_file);
       return EXIT_FAILURE;
     }
     printf("Outputting structured aggregate data to: %s\n", args.agg_data_filepath);
-  }
-  if (args.stack_trace_filepath)
-  {
-    stack_trace_file = fopen(args.stack_trace_filepath, "wb");
-    if (!stack_trace_file)
-    {
-      perror("Failed to open output file for stack traces");
-      if (output_event_file)
-        fclose(output_event_file);
-      if (output_agg_data_file)
-        fclose(output_agg_data_file);
-      return EXIT_FAILURE;
-    }
-    printf("Outputting stack traces to: %s\n", args.stack_trace_filepath);
   }
 
   libbpf_set_strict_mode(LIBBPF_STRICT_ALL);
@@ -422,18 +347,6 @@ int main(int argc, char **argv)
   }
   printf("All %d probes attached successfully.\n", attached_count);
 
-  // For perf buffer, pass skel as context if not writing to file,
-  // otherwise output_event_file is used directly in handle_event.
-  // To keep handle_event signature stable, we pass skel.
-  pb = perf_buffer__new(bpf_map__fd(skel->maps.events), PERF_BUFFER_PAGES,
-                        handle_event, NULL, skel, NULL);
-  if (!pb)
-  {
-    err = -errno;
-    fprintf(stderr, "Failed to create perf buffer: %s\n", strerror(-err));
-    goto cleanup_file;
-  }
-
   signal(SIGINT, sig_handler);
   signal(SIGTERM, sig_handler);
 
@@ -443,21 +356,6 @@ int main(int argc, char **argv)
 
   while (!exiting)
   {
-    err = perf_buffer__poll(pb, 1000 /* timeout, ms */);
-    if (err == -EINTR)
-    {
-      err = 0;
-      continue;
-    }
-    if (err < 0)
-    {
-      if (err != -EBADF)
-      {
-        fprintf(stderr, "Error polling perf buffer: %s\n", strerror(-err));
-      }
-      break;
-    }
-
     if (args.duration_sec > 0)
     {
       clock_gettime(CLOCK_MONOTONIC, &now_ts);
@@ -467,27 +365,14 @@ int main(int argc, char **argv)
         break;
       }
     }
+    usleep(500000);
   }
-  perf_buffer__poll(pb, 0);
 
   // Final histogram print and stack map dump
-  if (skel)
-  {
-    if (output_agg_data_file)
-      dump_aggregate_to_file(output_agg_data_file, skel);
-
-    if (stack_trace_file)
-      dump_stack_trace_map(stack_trace_file, skel);
-  }
+  if (skel && output_agg_data_file)
+    dump_aggregate_to_file(output_agg_data_file, skel);
 
 cleanup_file:
-  if (output_event_file)
-  {
-    printf("Closing binary output file: %s\n", args.output_filepath);
-    if (fclose(output_event_file) != 0)
-      perror("Failed to close output binary file");
-    output_event_file = NULL;
-  }
   if (output_agg_data_file)
   {
     printf("Closing aggregate data file: %s\n", args.agg_data_filepath);
@@ -495,20 +380,7 @@ cleanup_file:
       perror("Failed to close aggregate data file");
     output_agg_data_file = NULL;
   }
-  if (stack_trace_file)
-  {
-    printf("Closing binary stack trace output file: %s\n", args.stack_trace_filepath);
-    if (fclose(stack_trace_file) != 0)
-      perror("Failed to close output binary file");
-    stack_trace_file = NULL;
-  }
 
-  printf("Cleaning up BPF resources...\n");
-  if (pb)
-  { // Free perf buffer before destroying links that might be in use by callback
-    perf_buffer__free(pb);
-    pb = NULL;
-  }
   for (int i = 0; i < attached_count; i++)
   {
     if (attached_links[i])

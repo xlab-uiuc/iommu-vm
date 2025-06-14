@@ -44,32 +44,6 @@ static const char *func_name_to_string(enum FunctionName fn)
 {
   switch (fn)
   {
-  case IOMMU_MAP:
-    return "iommu_map";
-  case IOMMU_MAP_INTERNAL:
-    return "__iommu_map";
-  case IOMMU_IOTLB_SYNC_MAP:
-    return "intel_iommu_iotlb_sync_map";
-  case IOMMU_UNMAP:
-    return "iommu_unmap";
-  case IOMMU_UNMAP_INTERNAL:
-    return "__iommu_unmap";
-  case IOMMU_TLB_SYNC:
-    return "intel_iommu_tlb_sync";
-  case QEMU_ADDRESS_SPACE_RW:
-    return "qemu:address_space_rw";
-  case QEMU_ADDRESS_SPACE_WRITE:
-    return "qemu:address_space_write";
-  case QEMU_VTD_MEM_WRITE:
-    return "qemu:vtd_mem_write";
-  case QEMU_VFIO_DMA_MAP:
-    return "qemu:vfio_container_dma_map";
-  case QEMU_VFIO_DMA_UNMAP:
-    return "qemu:vfio_container_dma_unmap";
-  case QEMU_VFIO_REGION_WRITE:
-    return "qemu:vfio_region_write";
-  case QEMU_VTD_IOMMU_TRANSLATE:
-    return "qemu:vtd_iommu_translate";
   default:
     return "UnknownFunction";
   }

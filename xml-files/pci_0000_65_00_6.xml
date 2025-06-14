@@ -1,0 +1,30 @@
+<device>
+  <name>pci_0000_65_00_6</name>
+  <path>/sys/devices/pci0000:64/0000:64:02.0/0000:65:00.6</path>
+  <parent>pci_0000_64_02_0</parent>
+  <driver>
+    <name>mlx5_core</name>
+  </driver>
+  <capability type='pci'>
+    <class>0x020000</class>
+    <domain>0</domain>
+    <bus>101</bus>
+    <slot>0</slot>
+    <function>6</function>
+    <product id='0x101a'>MT28800 Family [ConnectX-5 Ex Virtual Function]</product>
+    <vendor id='0x15b3'>Mellanox Technologies</vendor>
+    <capability type='phys_function'>
+      <address domain='0x0000' bus='0x65' slot='0x00' function='0x1'/>
+    </capability>
+    <iommuGroup number='310'>
+      <address domain='0x0000' bus='0x65' slot='0x00' function='0x6'/>
+    </iommuGroup>
+    <numa node='0'/>
+    <pci-express>
+      <link validity='cap' port='0' speed='16' width='16'/>
+      <link validity='sta' width='0'/>
+    </pci-express>
+  </capability>
+</device>
+
+
