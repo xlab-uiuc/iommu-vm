@@ -1,5 +1,5 @@
 <domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
-  <name>server-iommufd-viommu</name>
+  <name>server-iommufd-off</name>
   <metadata>
     <libosinfo:libosinfo xmlns:libosinfo="http://libosinfo.org/xmlns/libvirt/domain/1.0">
       <libosinfo:os id="http://ubuntu.com/ubuntu/20.04"/>
@@ -185,12 +185,12 @@
       <type name='iommufd'/>
       </iommu>
     </interface> -->
-    <iommu model='intel'>
+    <!-- <iommu model='intel'>
       <driver intremap='on' caching_mode='on' x-scalable-mode='on' x-flts='on' backend='iommufd'/>
       <iommufd>
         <id>iommufd0</id>
       </iommufd>
-    </iommu>
+    </iommu> -->
     <hostdev mode='subsystem' type='pci' managed='yes'>
       <source>
         <address domain='0x0000' bus='0x6f' slot='0x00' function='0x1'/>
