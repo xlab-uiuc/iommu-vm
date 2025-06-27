@@ -19,7 +19,7 @@
     <kernel>/boot/vmlinuz-6.12.9-iommufd</kernel>
     <initrd>/boot/initrd.img-6.12.9-iommufd</initrd>
     <!-- <cmdline>root=/dev/vda2 ro  console=ttyS0,115200 earlyprintk=serial,ttyS0,115200 intel_iommu=off</cmdline> -->
-    <cmdline>root=/dev/vda2 ro  console=ttyS0,115200 earlyprintk=serial,ttyS0,115200 intel_iommu=on,sm_on iommu.strict=1</cmdline>
+    <cmdline>root=/dev/vda2 ro  console=ttyS0,115200 earlyprintk=serial,ttyS0,115200</cmdline>
     <loader>/users/Leshna/nested-translation/qemu/pc-bios/bios-256k.bin</loader>
     <boot dev='hd'/>
   </os>

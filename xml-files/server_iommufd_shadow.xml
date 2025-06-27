@@ -186,7 +186,7 @@
       </iommu>
     </interface> -->
     <iommu model='intel'>
-      <driver intremap='on' caching_mode='on' x-scalable-mode='on' backend='iommufd'/>
+      <driver intremap='on' caching_mode='on' backend='iommufd'/>
       <iommufd>
         <id>iommufd0</id>
       </iommufd>
