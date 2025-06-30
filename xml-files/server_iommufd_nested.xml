@@ -226,7 +226,7 @@
     <video>
       <model type='virtio' heads='1' primary='yes'/>
       <alias name='video0'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x0'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
     </video>
     <memballoon model='virtio'>
       <alias name='balloon0'/>
@@ -248,6 +248,6 @@
     <qemu:arg value='-device'/>
     <qemu:arg value='intel-iommu,intremap=on,caching-mode=on,x-scalable-mode=on,x-flts=on'/>
     <qemu:arg value='-device'/>
-    <qemu:arg value='vfio-pci,host=0000:6f:00.1,id=hostdev0,iommufd=iommufd0'/>
+    <qemu:arg value='vfio-pci,host=0000:17:00.0,id=hostdev0,iommufd=iommufd0'/>
   </qemu:commandline>
 </domain>

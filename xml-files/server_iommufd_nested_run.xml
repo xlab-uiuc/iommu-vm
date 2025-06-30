@@ -1,6 +1,6 @@
-<domain type='kvm' id='5'>
+<domain type='kvm' id='1' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
   <name>server-iommufd-viommu</name>
-  <uuid>b3978d27-1520-4611-8e62-91cc47ed2686</uuid>
+  <uuid>9895bff6-97bd-49d8-aa24-64143cf5e4e4</uuid>
   <metadata>
     <libosinfo:libosinfo xmlns:libosinfo="http://libosinfo.org/xmlns/libvirt/domain/1.0">
       <libosinfo:os id="http://ubuntu.com/ubuntu/20.04"/>
@@ -165,8 +165,8 @@
     </filesystem>
     <interface type='network'>
       <mac address='52:54:00:14:26:e2'/>
-      <source network='default' portid='3119d31e-54ad-4f22-bec1-a3398ba5851a' bridge='virbr0'/>
-      <target dev='vnet4'/>
+      <source network='default' portid='bc114931-66ae-4780-af06-cb474cafb719' bridge='virbr0'/>
+      <target dev='vnet0'/>
       <model type='virtio'/>
       <alias name='net0'/>
       <address type='pci' domain='0x0000' bus='0x01' slot='0x00' function='0x0'/>
@@ -184,7 +184,7 @@
       <alias name='serial0'/>
     </console>
     <channel type='unix'>
-      <source mode='bind' path='/run/libvirt/qemu/channel/5-server-iommufd-viomm/org.qemu.guest_agent.0'/>
+      <source mode='bind' path='/run/libvirt/qemu/channel/1-server-iommufd-viomm/org.qemu.guest_agent.0'/>
       <target type='virtio' name='org.qemu.guest_agent.0' state='disconnected'/>
       <alias name='channel0'/>
       <address type='virtio-serial' controller='0' bus='0' port='1'/>
@@ -203,16 +203,8 @@
     <video>
       <model type='virtio' heads='1' primary='yes'/>
       <alias name='video0'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x0'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
     </video>
-    <hostdev mode='subsystem' type='pci' managed='yes'>
-      <driver name='vfio'/>
-      <source>
-        <address domain='0x0000' bus='0x6f' slot='0x00' function='0x1'/>
-      </source>
-      <alias name='hostdev0'/>
-      <address type='pci' domain='0x0000' bus='0x08' slot='0x00' function='0x0'/>
-    </hostdev>
     <watchdog model='itco' action='reset'>
       <alias name='watchdog0'/>
     </watchdog>
@@ -225,14 +217,18 @@
       <alias name='rng0'/>
       <address type='pci' domain='0x0000' bus='0x06' slot='0x00' function='0x0'/>
     </rng>
-    <iommu model='intel'>
-      <driver intremap='on' caching_mode='on'/>
-      <alias name='iommu0'/>
-    </iommu>
   </devices>
   <seclabel type='dynamic' model='dac' relabel='yes'>
     <label>+0:+0</label>
     <imagelabel>+0:+0</imagelabel>
   </seclabel>
+  <qemu:commandline>
+    <qemu:arg value='-object'/>
+    <qemu:arg value='iommufd,id=iommufd0'/>
+    <qemu:arg value='-device'/>
+    <qemu:arg value='intel-iommu,intremap=on,caching-mode=on,x-scalable-mode=on,x-flts=on'/>
+    <qemu:arg value='-device'/>
+    <qemu:arg value='vfio-pci,host=0000:17:00.0,id=hostdev0,iommufd=iommufd0'/>
+  </qemu:commandline>
 </domain>
 
