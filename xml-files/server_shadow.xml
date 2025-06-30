@@ -1,5 +1,5 @@
 <domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
-  <name>server-iommufd-shadow</name>
+  <name>server-shadow</name>
   <metadata>
     <libosinfo:libosinfo xmlns:libosinfo="http://libosinfo.org/xmlns/libvirt/domain/1.0">
       <libosinfo:os id="http://ubuntu.com/ubuntu/20.04"/>
@@ -19,7 +19,7 @@
     <kernel>/boot/vmlinuz-6.12.9-iommufd-cdev</kernel>
     <initrd>/boot/initrd.img-6.12.9-iommufd-cdev</initrd>
     <!-- <cmdline>root=/dev/vda2 ro  console=ttyS0,115200 earlyprintk=serial,ttyS0,115200 intel_iommu=off</cmdline> -->
-    <cmdline>root=/dev/vda2 ro  console=ttyS0,115200 earlyprintk=serial,ttyS0,115200 intel_iommu=on,sm_on iommu.strict=1</cmdline>
+    <cmdline>root=/dev/vda2 ro  console=ttyS0,115200 earlyprintk=serial,ttyS0,115200 intel_iommu=on iommu.strict=1</cmdline>
     <loader>/users/Leshna/nested-translation/qemu/pc-bios/bios-256k.bin</loader>
     <boot dev='hd'/>
   </os>
@@ -226,11 +226,9 @@
   <qemu:commandline>
     <qemu:arg value='-M'/>
     <qemu:arg value='kernel_irqchip=split'/>
-    <qemu:arg value='-object'/>
-    <qemu:arg value='iommufd,id=iommufd0'/>
     <qemu:arg value='-device'/>
     <qemu:arg value='intel-iommu,intremap=on,caching-mode=on'/>
     <qemu:arg value='-device'/>
-    <qemu:arg value='vfio-pci,host=0000:17:00.0,id=hostdev0,iommufd=iommufd0'/>
+    <qemu:arg value='vfio-pci,host=0000:17:00.0,id=hostdev0'/>
   </qemu:commandline>
 </domain>

@@ -1,6 +1,6 @@
-<domain type='kvm' id='1' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
+<domain type='kvm' id='3' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
   <name>server-iommufd-viommu</name>
-  <uuid>9895bff6-97bd-49d8-aa24-64143cf5e4e4</uuid>
+  <uuid>f1fc1365-d047-4f2b-adf4-54dd40b73365</uuid>
   <metadata>
     <libosinfo:libosinfo xmlns:libosinfo="http://libosinfo.org/xmlns/libvirt/domain/1.0">
       <libosinfo:os id="http://ubuntu.com/ubuntu/20.04"/>
@@ -18,8 +18,8 @@
   <os>
     <type arch='x86_64' machine='pc-q35-10.1'>hvm</type>
     <loader type='rom'>/users/Leshna/nested-translation/qemu/pc-bios/bios-256k.bin</loader>
-    <kernel>/boot/vmlinuz-6.12.9-iommufd</kernel>
-    <initrd>/boot/initrd.img-6.12.9-iommufd</initrd>
+    <kernel>/boot/vmlinuz-6.12.9-iommufd-cdev</kernel>
+    <initrd>/boot/initrd.img-6.12.9-iommufd-cdev</initrd>
     <cmdline>root=/dev/vda2 ro  console=ttyS0,115200 earlyprintk=serial,ttyS0,115200 intel_iommu=on,sm_on iommu.strict=1</cmdline>
     <boot dev='hd'/>
   </os>
@@ -165,8 +165,8 @@
     </filesystem>
     <interface type='network'>
       <mac address='52:54:00:14:26:e2'/>
-      <source network='default' portid='bc114931-66ae-4780-af06-cb474cafb719' bridge='virbr0'/>
-      <target dev='vnet0'/>
+      <source network='default' portid='6b0a188d-c78c-438e-a3ec-0f315ba75e08' bridge='virbr0'/>
+      <target dev='vnet2'/>
       <model type='virtio'/>
       <alias name='net0'/>
       <address type='pci' domain='0x0000' bus='0x01' slot='0x00' function='0x0'/>
@@ -184,7 +184,7 @@
       <alias name='serial0'/>
     </console>
     <channel type='unix'>
-      <source mode='bind' path='/run/libvirt/qemu/channel/1-server-iommufd-viomm/org.qemu.guest_agent.0'/>
+      <source mode='bind' path='/run/libvirt/qemu/channel/3-server-iommufd-viomm/org.qemu.guest_agent.0'/>
       <target type='virtio' name='org.qemu.guest_agent.0' state='disconnected'/>
       <alias name='channel0'/>
       <address type='virtio-serial' controller='0' bus='0' port='1'/>
@@ -223,6 +223,8 @@
     <imagelabel>+0:+0</imagelabel>
   </seclabel>
   <qemu:commandline>
+    <qemu:arg value='-M'/>
+    <qemu:arg value='kernel_irqchip=split'/>
     <qemu:arg value='-object'/>
     <qemu:arg value='iommufd,id=iommufd0'/>
     <qemu:arg value='-device'/>
