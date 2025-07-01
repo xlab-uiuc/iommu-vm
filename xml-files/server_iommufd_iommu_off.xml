@@ -16,10 +16,10 @@
   </resource>
   <os>
     <type arch='x86_64' machine='q35'>hvm</type>
-    <kernel>/boot/vmlinuz-6.12.9-iommufd</kernel>
-    <initrd>/boot/initrd.img-6.12.9-iommufd</initrd>
+    <kernel>/boot/vmlinuz-6.12.9-iommufd-cdev</kernel>
+    <initrd>/boot/initrd.img-6.12.9-iommufd-cdev</initrd>
     <!-- <cmdline>root=/dev/vda2 ro  console=ttyS0,115200 earlyprintk=serial,ttyS0,115200 intel_iommu=off</cmdline> -->
-    <cmdline>root=/dev/vda2 ro  console=ttyS0,115200 earlyprintk=serial,ttyS0,115200</cmdline>
+    <cmdline>root=/dev/vda2 ro  console=ttyS0,115200 earlyprintk=serial,ttyS0,115200 intel_iommu=off</cmdline>
     <loader>/users/Leshna/nested-translation/qemu/pc-bios/bios-256k.bin</loader>
     <boot dev='hd'/>
   </os>
@@ -173,31 +173,6 @@
       <alias name='net0'/>
       <address type='pci' domain='0x0000' bus='0x01' slot='0x00' function='0x0'/>
     </interface>
-    <!-- <interface type='hostdev'>
-      <mac address='52:54:00:bd:98:77'/>
-      <driver name='vfio'/>
-      <source>
-        <address type='pci' domain='0x0000' bus='0x65' slot='0x00' function='0x6'/>
-      </source>
-      <alias name='hostdev0'/>
-      <address type='pci' domain='0x0000' bus='0x08' slot='0x00' function='0x0'/>
-      <iommu>
-      <type name='iommufd'/>
-      </iommu>
-    </interface> -->
-    <!-- <iommu model='intel'>
-      <driver intremap='on' caching_mode='on' x-scalable-mode='on' x-flts='on' backend='iommufd'/>
-      <iommufd>
-        <id>iommufd0</id>
-      </iommufd>
-    </iommu> -->
-    <hostdev mode='subsystem' type='pci' managed='yes'>
-      <source>
-        <address domain='0x0000' bus='0x6f' slot='0x00' function='0x1'/>
-      </source>
-      <driver name='vfio'/>
-      <iommufdId>iommufd0</iommufdId>
-    </hostdev>
     <serial type='pty'>
       <source path='/dev/pts/1'/>
       <target type='isa-serial' port='0'>
@@ -232,7 +207,7 @@
     <video>
       <model type='virtio' heads='1' primary='yes'/>
       <alias name='video0'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x0'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
     </video>
     <memballoon model='virtio'>
       <alias name='balloon0'/>
@@ -248,14 +223,10 @@
     <label>+64055:+108</label>
     <imagelabel>+64055:+108</imagelabel>
   </seclabel>
-  <!-- <qemu:commandline>
-    <qemu:arg value='-machine'/>
-    <qemu:arg value='kernel-irqchip=split'/>
-    <qemu:arg value='-object'/>
-    <qemu:arg value='iommufd,id=iommufd0'/>
+  <qemu:commandline>
+    <qemu:arg value='-M'/>
+    <qemu:arg value='kernel_irqchip=split'/>
     <qemu:arg value='-device'/>
-    <qemu:arg value='intel-iommu,intremap=on,caching-mode=on,x-scalable-mode=on,x-flts=on'/>
-    <qemu:arg value='-device'/>
-    <qemu:arg value='vfio-pci,host=0000:6f:00.1,id=hostdev0,iommufd=iommufd0'/>
-  </qemu:commandline> -->
+    <qemu:arg value='vfio-pci,host=0000:17:00.0,id=hostdev0'/>
+  </qemu:commandline>
 </domain>
