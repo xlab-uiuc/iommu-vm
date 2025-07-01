@@ -1,5 +1,5 @@
 <domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
-  <name>server-shadow</name>
+  <name>server-no-iommufd-shadow</name>
   <metadata>
     <libosinfo:libosinfo xmlns:libosinfo="http://libosinfo.org/xmlns/libvirt/domain/1.0">
       <libosinfo:os id="http://ubuntu.com/ubuntu/20.04"/>
@@ -11,13 +11,31 @@
   <numatune>
     <memory mode='strict' nodeset='0'/>
   </numatune>
+  <cputune>
+    <vcpupin vcpu='0' cpuset='0'/>
+    <vcpupin vcpu='1' cpuset='1'/>
+    <vcpupin vcpu='2' cpuset='2'/>
+    <vcpupin vcpu='3' cpuset='3'/>
+    <vcpupin vcpu='4' cpuset='4'/>
+    <vcpupin vcpu='5' cpuset='5'/>
+    <vcpupin vcpu='6' cpuset='6'/>
+    <vcpupin vcpu='7' cpuset='7'/>
+    <vcpupin vcpu='8' cpuset='8'/>
+    <vcpupin vcpu='9' cpuset='9'/>
+    <vcpupin vcpu='10' cpuset='10'/>
+    <vcpupin vcpu='11' cpuset='11'/>
+    <vcpupin vcpu='12' cpuset='12'/>
+    <vcpupin vcpu='13' cpuset='13'/>
+    <vcpupin vcpu='14' cpuset='14'/>
+    <vcpupin vcpu='15' cpuset='15'/>
+  </cputune>
   <resource>
     <partition>/machine</partition>
   </resource>
   <os>
     <type arch='x86_64' machine='q35'>hvm</type>
-    <kernel>/boot/vmlinuz-6.12.9-iommufd</kernel>
-    <initrd>/boot/initrd.img-6.12.9-iommufd</initrd>
+    <kernel>/boot/vmlinuz-6.12.9-iommufd-cdev</kernel>
+    <initrd>/boot/initrd.img-6.12.9-iommufd-cdev</initrd>
     <!-- <cmdline>root=/dev/vda2 ro  console=ttyS0,115200 earlyprintk=serial,ttyS0,115200 intel_iommu=off</cmdline> -->
     <cmdline>root=/dev/vda2 ro  console=ttyS0,115200 earlyprintk=serial,ttyS0,115200 intel_iommu=on,sm_on iommu.strict=1</cmdline>
     <loader>/users/Leshna/nested-translation/qemu/pc-bios/bios-256k.bin</loader>
@@ -201,9 +219,6 @@
     <input type='keyboard' bus='ps2'>
       <alias name='input2'/>
     </input>
-    <!-- <graphics type='vnc' port='5900' autoport='yes' listen='127.0.0.1'>
-      <listen type='address' address='127.0.0.1'/>
-    </graphics> -->
     <video>
       <model type='virtio' heads='1' primary='yes'/>
       <alias name='video0'/>
